@@ -1,7 +1,7 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:sms/sms.dart';
+import 'package:flutter_sms/flutter_sms.dart';
+// import 'package:sms/sms.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -36,7 +36,7 @@ class SmsHomePage extends StatefulWidget {
 
 class _SmsHomePageState extends State<SmsHomePage>
     with TickerProviderStateMixin {
-  final String uniqueNumber = "+94741891381"; 
+  final String uniqueNumber = "+94741891381";
   //final String uniqueNumber = "+94758713250";
   final String sirenOn = "1234#ON#";
   final String sirenReset = "1234#RESET#";
@@ -198,15 +198,19 @@ class _SmsHomePageState extends State<SmsHomePage>
 
 //SEND RESET MESSAGE
   void _sendSMSAndTime() async {
-    SmsSender sender = SmsSender();
-
     String formattedTime =
         '${DateTime.now().hour.toString().padLeft(2, '0')}${DateTime.now().minute.toString().padLeft(2, '0')}';
 
-    sender.sendSms(SmsMessage(uniqueNumber, sirenOn)).then((result) async {
+    try {
+      // Sending SMS using flutter_sms package
+      String result = await sendSMS(
+        message: sirenOn, // Your message here
+        recipients: [uniqueNumber], // Your recipient number
+      );
+
       // Show Toast for SMS success
       Fluttertoast.showToast(
-        msg: "Siren On Message sent to successfully!",
+        msg: "Siren On Message sent successfully!",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
@@ -215,27 +219,9 @@ class _SmsHomePageState extends State<SmsHomePage>
         fontSize: 16.0,
       );
 
-      SmsReceiver receiver = SmsReceiver();
-      receiver.onSmsReceived.listen((SmsMessage message) {
-        if (message.address == uniqueNumber) {
-          Fluttertoast.showToast(
-            msg: "Received reply: ${message.body}",
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 3,
-            backgroundColor: const Color.fromARGB(255, 4, 112, 28),
-            textColor: Colors.white,
-            fontSize: 16.0,
-          );
-
-          setState(() {
-            _receivedMessage = message.body;
-          });
-        }
-      });
-
+      // Simulate sending current time to an API
       await _sendCurrentTimeToApi(formattedTime);
-    }).catchError((error) {
+    } catch (error) {
       // Show Toast for SMS error
       Fluttertoast.showToast(
         msg: "Error sending SMS: $error",
@@ -246,7 +232,7 @@ class _SmsHomePageState extends State<SmsHomePage>
         textColor: Colors.white,
         fontSize: 16.0,
       );
-    });
+    }
 
     print("Attempting to send SMS to $uniqueNumber at $formattedTime");
   }
@@ -306,11 +292,16 @@ class _SmsHomePageState extends State<SmsHomePage>
   //SEND RESET MESSAGE
 
   void _sirenReset() async {
-    SmsSender sender = SmsSender();
-    sender.sendSms(SmsMessage(uniqueNumber, sirenReset)).then((result) async {
-      // Show toast message
+    try {
+      // Sending SMS using flutter_sms package
+      String result = await sendSMS(
+        message: sirenReset, // Your message here
+        recipients: [uniqueNumber], // Your recipient number
+      );
+
+      // Show Toast for SMS success
       Fluttertoast.showToast(
-        msg: "Siren Reset SMS sent to  successfully!",
+        msg: "Siren Reset SMS sent successfully!",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
@@ -318,31 +309,16 @@ class _SmsHomePageState extends State<SmsHomePage>
         textColor: Colors.white,
         fontSize: 16.0,
       );
-      SmsReceiver receiver = SmsReceiver();
-      receiver.onSmsReceived.listen((SmsMessage message) {
-        if (message.address == uniqueNumber) {
-          Fluttertoast.showToast(
-            msg: "Received reply: ${message.body}",
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 3,
-            backgroundColor: const Color.fromARGB(255, 245, 189, 6),
-            textColor: Colors.white,
-            fontSize: 16.0,
-          );
 
-          setState(() {
-            _receivedMessage = message.body;
-          });
-        }
-      });
-    }).catchError((error) {
+      // If necessary, send current time to an API or perform any other action here
+
+    } catch (error) {
       // Show SnackBar for error feedback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error sending SMS: $error")),
       );
 
-      // Show toast message for error
+      // Show Toast for SMS error
       Fluttertoast.showToast(
         msg: "Error sending SMS: $error",
         toastLength: Toast.LENGTH_SHORT,
@@ -352,16 +328,23 @@ class _SmsHomePageState extends State<SmsHomePage>
         textColor: Colors.white,
         fontSize: 16.0,
       );
-    });
+    }
+
+    print("Attempting to send SMS to $uniqueNumber");
   }
 
   //SEND CONFIG MESSAGE
   void _sirenConfig() async {
-    SmsSender sender = SmsSender();
-    sender.sendSms(SmsMessage(uniqueNumber, sirenConfig)).then((result) async {
-      // Show toast message
+    try {
+      // Sending SMS using flutter_sms package
+      String result = await sendSMS(
+        message: sirenConfig, // Your message to be sent
+        recipients: [uniqueNumber], // Your recipient's number
+      );
+
+      // Show Toast for SMS success
       Fluttertoast.showToast(
-        msg: " Siren Config SMS sent to successfully!",
+        msg: "Siren Config SMS sent successfully!",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
@@ -370,31 +353,15 @@ class _SmsHomePageState extends State<SmsHomePage>
         fontSize: 16.0,
       );
 
-      //CHECK INCOMMING MESSAGE
+      // If necessary, perform any additional actions like sending data to an API
 
-      SmsReceiver receiver = SmsReceiver();
-      receiver.onSmsReceived.listen((SmsMessage message) {
-        if (message.address == uniqueNumber) {
-          Fluttertoast.showToast(
-            msg: "Received reply: ${message.body}",
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 3,
-            backgroundColor: const Color.fromARGB(255, 243, 106, 43),
-            textColor: Colors.white,
-            fontSize: 16.0,
-          );
-
-          setState(() {
-            _receivedMessage = message.body;
-          });
-        }
-      });
-    }).catchError((error) {
+    } catch (error) {
+      // Show SnackBar for error feedback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error sending SMS: $error")),
       );
-       // Show toast message for error
+
+      // Show Toast for SMS error
       Fluttertoast.showToast(
         msg: "Error sending SMS: $error",
         toastLength: Toast.LENGTH_SHORT,
@@ -404,7 +371,9 @@ class _SmsHomePageState extends State<SmsHomePage>
         textColor: Colors.white,
         fontSize: 16.0,
       );
-    });
+    }
+
+    print("Attempting to send SMS to $uniqueNumber");
   }
 
   @override
@@ -490,15 +459,14 @@ class _SmsHomePageState extends State<SmsHomePage>
                 child: ElevatedButton(
                   onPressed: () async {
                     _controller2.forward().then((_) => _controller2.reverse());
-                      bool userConfirmed = await _showConfirmationDialog(
-                          cancelText: 'Cancel',
-                          confirmText: 'Confirm',
-                          message: 'Are you sure to Reset Siren ?',
-                          title: 'Alert !');
-                      if (userConfirmed) {
-                        _sirenReset();
-                      }
-                
+                    bool userConfirmed = await _showConfirmationDialog(
+                        cancelText: 'Cancel',
+                        confirmText: 'Confirm',
+                        message: 'Are you sure to Reset Siren ?',
+                        title: 'Alert !');
+                    if (userConfirmed) {
+                      _sirenReset();
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     primary: const Color.fromARGB(
@@ -523,14 +491,14 @@ class _SmsHomePageState extends State<SmsHomePage>
                 child: ElevatedButton(
                   onPressed: () async {
                     _controller3.forward().then((_) => _controller3.reverse());
-                        bool userConfirmed = await _showConfirmationDialog(
-                          cancelText: 'Cancel',
-                          confirmText: 'Confirm',
-                          message: 'Are you sure to Config Siren ?',
-                          title: 'Alert !');
-                      if (userConfirmed) {
-                        _sirenConfig();
-                      }
+                    bool userConfirmed = await _showConfirmationDialog(
+                        cancelText: 'Cancel',
+                        confirmText: 'Confirm',
+                        message: 'Are you sure to Config Siren ?',
+                        title: 'Alert !');
+                    if (userConfirmed) {
+                      _sirenConfig();
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     primary: const Color.fromARGB(

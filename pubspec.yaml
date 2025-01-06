@@ -16,7 +16,7 @@ dependencies:
   sms_advanced: ^1.0.2
   flutter_sms: ^2.3.3
   url_launcher: ^6.1.10
-  sms: ^0.2.4
+  #sms: ^0.2.4
   http: ^0.13.5
   intl: ^0.18.1
   fluttertoast: ^8.2.5
