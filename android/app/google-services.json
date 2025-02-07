@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "806124290327",
+    "firebase_url": "https://landingctrl-default-rtdb.firebaseio.com",
+    "project_id": "landingctrl",
+    "storage_bucket": "landingctrl.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:806124290327:android:059df50ce700dacdeaf752",
+        "android_client_info": {
+          "package_name": "io.digitable.LandingCTRL"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhTdOlSajHJvMW2TWOSkMvftFYnK_ArnU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
