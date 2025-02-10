@@ -1,3 +1,4 @@
+
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,63 +23,76 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
   bool isTakeOff = false;
   late Future<List<Flight>> futureFlights;
   Flight? _selectedFlight;
+  String? flightNo;
+  String? des;
   AnimationController? _animationController;
   bool switchValue = false;
+  late AnimationController _controller1;
+  late Animation<double> _scaleAnimation1;
+   DateTime today = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    futureFlights = fetchAndFilterFlights(widget.selectedAirport);
+    futureFlights = fetchFlightData(widget.selectedAirport);
     _animationController = AnimationController(
         vsync: this, duration: Duration(milliseconds: 2000));
+
+    _controller1 = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _scaleAnimation1 = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _controller1, curve: Curves.easeInOut),
+    );
   }
 
-  Future<List<Flight>> fetchAndFilterFlights(String selectedAirport) async {
-      DateTime today = DateTime.now();
-       String formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+  Future<List<Flight>> fetchFlightData(String selectedAirport) async {
+    DateTime today = DateTime.now();
+   String formattedDate = DateFormat('dd/MM/yyyy').format(today);
     final response = await http.get(
-      Uri.parse('https://cinnamon.go.digitable.io/api/avidi/v1/radar?type=today&port=$selectedAirport'),
+      Uri.parse(
+          'https://cinnamon.go.digitable.io/api/avidi/v1/radar?type=today&port=$selectedAirport'),
     );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      print(data);
-      if (data['status'] == true) {
-        List<dynamic> flightsJson = data['data'];
-        DateTime today = DateTime.now();
-        String todayFormatted = "${today.day.toString().padLeft(2, '0')}";
-       
-        print('=============================$today');
-          print('=============================$todayFormatted');
-          print('=============================$formattedDate');
-        List<Flight> filteredFlights =
-            flightsJson.map((json) => Flight.fromJson(json)).where((flight) {
-          String flightDate = flight.flightDate;
-          bool isToday = flightDate.startsWith(todayFormatted);
-          bool hasSelectedAirport =
-              flight.departure.contains(selectedAirport) ||
-                  flight.destination.contains(selectedAirport) ||
-                  flight.route.contains(selectedAirport);
-          return isToday && hasSelectedAirport;
+    try {
+      if (response.statusCode == 200) {
+        Map<String, dynamic> responseData = jsonDecode(response.body);
+        List<dynamic> flightsData = responseData['data'];
+        if (flightsData.isEmpty) {
+          print("No flight data available.");
+          return [];
+        }
+        
+
+        List<Flight> flights = flightsData.map((flight) {
+          var portData = flight['port_data'];
+          String flightNo = portData['flightNo'] != null
+              ? portData['flightNo'].toString()
+              : 'N/A';
+          String des =
+              portData['des'] != null ? portData['des'].toString() : 'N/A';
+
+          return Flight(flightNo: flightNo, des: des);
         }).toList();
-        return filteredFlights;
+
+        return flights;
       } else {
-        throw Exception('API returned false status');
+        print('Failed to load data');
+        return [];
       }
-    } else {
-      throw Exception('Failed to load flights');
+    } catch (e) {
+      print('Error: $e');
+      return [];
     }
   }
 
   void submitSelection() {
     if (_selectedFlight != null) {
-      String desTime = _selectedFlight!.desTime;
-      DateTime currentTime = DateTime.parse('2025-02-06T$desTime:00');
-      DateTime updatedTime = currentTime.add(Duration(minutes: 15));
-      String updatedDesTime =
-          '${updatedTime.hour.toString().padLeft(2, '0')}${updatedTime.minute.toString().padLeft(2, '0')}';
-
-      sendData(_selectedFlight!, updatedDesTime);
+      String desTime = _selectedFlight!.des;
+      String flightNo = _selectedFlight!.flightNo;
+      print("==========----------${_selectedFlight!.flightNo}");
+      sendData(flightNo, desTime);
     } else {
       Fluttertoast.showToast(
         msg: "Please select a flight",
@@ -92,9 +106,16 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
   }
 
   @override
+  void dispose() {
+    _controller1.dispose();
+    _animationController!.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text("SELECT T/O")),
+       // appBar: AppBar(title: Text("SELECT T/O")),
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -107,7 +128,17 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SlideAnimation(
+                Padding(
+                  padding: const EdgeInsets.only(right: 120),
+                  child: SlideAnimation(position: 5, 
+                  itemCount:10, slideDirection:SlideDirection.fromRight,
+                   animationController: _animationController!,
+                    child:Text(" Today : ${DateFormat('yyyy-MM-dd').format(today)} ",style: TextStyle(color:Colors.blue,fontSize: 20,fontWeight:FontWeight.w600
+                   )   )) ),
+           
+                   SizedBox(height: 20,)
+                   
+               , SlideAnimation(
                   position: 5,
                   itemCount: 10,
                   animationController: _animationController!,
@@ -125,20 +156,19 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator());
+                          return Center(child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
                           return Center(
                               child: Text('Error: ${snapshot.error}'));
                         } else if (!snapshot.hasData ||
                             snapshot.data!.isEmpty) {
-                          return const Center(child: Text('No flights found.'));
+                          return Center(child: Text('No flights found.'));
                         } else {
                           List<Flight> flights = snapshot.data!;
                           return DropdownButton<Flight>(
                             isExpanded: true,
                             value: _selectedFlight,
-                            underline: const SizedBox(),
+                            underline: SizedBox(),
                             icon: Icon(Icons.airplanemode_active,
                                 color: Colors.blue.shade700),
                             iconSize: 24,
@@ -162,7 +192,7 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
                                 child: Container(
                                   padding: EdgeInsets.symmetric(vertical: 8),
                                   child: Text(
-                                    'Aircraft:${flight.aircraft}',
+                                    'Flight No: ${flight.flightNo}',
                                     style: TextStyle(
                                       color: _selectedFlight == flight
                                           ? Colors.blue.shade700
@@ -180,14 +210,11 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
                               setState(() {
                                 _selectedFlight = selectedFlight;
                               });
+
+                              // Print the selected flight number if it's not null
                               if (selectedFlight != null) {
-                                String desTime = selectedFlight.desTime;
-                                DateTime currentTime =
-                                    DateTime.parse('2025-02-06T$desTime:00');
-                                DateTime updatedTime =
-                                    currentTime.add(Duration(minutes: 15));
-                                String updatedDesTime =
-                                    '${updatedTime.hour.toString().padLeft(2, '0')}${updatedTime.minute.toString().padLeft(2, '0')}';
+                                print(
+                                    "Selected Flight No: ${selectedFlight.flightNo}");
                               }
                             },
                             borderRadius: BorderRadius.circular(12),
@@ -244,7 +271,8 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
                           ],
                           innerColor: Colors.white,
                           indicatorColor:
-                              switchValue ? Colors.blue : Colors.teal,
+                              switchValue ? Colors.blue : Color.fromARGB(
+                          255, 4, 112, 28),
                           iconAnimationType: AnimationType.onHover,
                           customIconBuilder: (context, local, global) => Center(
                             // Centers the text
@@ -272,55 +300,78 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
                   ],
                 ),
                 const SizedBox(height: 50),
-                SlideAnimation(
-                  position: 5,
-                  itemCount: 10,
-                  animationController: _animationController!,
-                  slideDirection: SlideDirection.fromLeft,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_selectedFlight == null) {
-                        Fluttertoast.showToast(
-                          msg: "Please select a flight",
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.BOTTOM,
-                          backgroundColor: Colors.black87,
-                          textColor: Colors.white,
-                          fontSize: 16.0,
-                        );
-                      } else {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text("Confirmation"),
-                            content: const Text("Do you want to proceed?"),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text("No"),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  submitSelection();
-                                },
-                                child: const Text("Yes"),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    },
-                    child: const Text('Submit Selection'),
+                ScaleTransition(
+                  scale: Tween<double>(begin: 1.0, end: 1.1).animate(
+                    CurvedAnimation(
+                        parent: _controller1, curve: Curves.easeInOut),
                   ),
-                ),
+                  child: SlideAnimation(
+                    position: 5,
+                    itemCount: 10,
+                    animationController: _animationController!,
+                    slideDirection: SlideDirection.fromLeft,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                         primary: const Color.fromARGB(
+                          255, 4, 112, 28), // Background color
+                        onPrimary: Colors.white, // Text color
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 30, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(30), // Rounded corners
+                        ),
+                        elevation: 5,
+                        minimumSize: const Size(200, 50), // Shadow effect
+                      ),
+                      onPressed: () async {
+                        _controller1
+                            .forward()
+                            .then((_) => _controller1.reverse());
+
+                        if (_selectedFlight == null) {
+                          Fluttertoast.showToast(
+                            msg: "Please select a flight",
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            backgroundColor: Colors.black87,
+                            textColor: Colors.white,
+                            fontSize: 16.0,
+                          );
+                        } else {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text("Confirmation"),
+                              content: const Text("Do you want to proceed?"),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text("No"),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    submitSelection();
+                                  },
+                                  child: const Text("Yes"),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text('Submit Selection'),
+                    ),
+                  ),
+                )
               ],
             ),
           ),
         ));
   }
 
-  Future<void> sendData(Flight selectedFlight, String updatedDesTime) async {
+  Future<void> sendData(String flightNo, String updatedDesTime) async {
     final ref = FirebaseDatabase.instance.ref();
     String status = switchValue ? "T/O" : "LANG";
     String paddData1 = '$status @ $updatedDesTime';
@@ -330,7 +381,7 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
     String paddedString1 = paddData1
         .padLeft(paddData1.length + padLeftLength1)
         .padRight(totalLength);
-    String paddData2 = selectedFlight.aircraft;
+    String paddData2 = flightNo;
     int padLeftLength2 = (totalLength - paddData2.length) ~/ 2;
     int padRightLength2 = totalLength - paddData2.length - padLeftLength2;
     String paddedString2 = paddData2
@@ -342,7 +393,7 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
     try {
       await ref.update({
         'inarea': "$paddedString2  $paddedString1",
-        'led': false,
+        'led': true,
         'tower': false,
       });
       Fluttertoast.showToast(

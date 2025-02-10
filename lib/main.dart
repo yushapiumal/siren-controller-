@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:siren/selectAirpot.dart';
 import 'package:siren/tabpage.dart';
-import 'homePage.dart'; // Replace with your actual home page
+import 'package:shared_preferences/shared_preferences.dart';
+ // Replace with your actual home page
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,12 +19,11 @@ void main() async {
   await Firebase.initializeApp();
   try {
     await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: "avidi@go.digitable.io", 
+      email: "avidi@go.digitable.io",
       password: "Y&Hhas6567%yg",
     );
     print("User authenticated successfully!");
 
-    // Get the Firebase ID token after successful authentication
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       String idToken = await user.getIdToken();
@@ -34,11 +35,19 @@ void main() async {
     print("Failed to authenticate: $e");
   }
 
-  runApp(const MyApp());
+  final prefs = await SharedPreferences.getInstance();
+  bool isFirstTime = prefs.getBool('first_time') ?? true;
+  String? selectedAirport = prefs.getString('selected_airport');
+
+  runApp(MyApp(isFirstTime: isFirstTime, selectedAirport: selectedAirport));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isFirstTime;
+  final String? selectedAirport;
+
+  const MyApp({Key? key, required this.isFirstTime, this.selectedAirport})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +58,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home:  const SmsHomePage (), // Your main screen
+      home: isFirstTime ? SelectionScreen() : MyTabbedApp(selectedAirport: selectedAirport),
     );
   }
 }

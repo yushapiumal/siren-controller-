@@ -47,10 +47,10 @@ void initState() {
   _requestPermissionsOnce(); // Ensure permissions are requested only once
   _connectivityStream = Connectivity().onConnectivityChanged;
 
-  _initializeAnimations();
+ _initializeAnimations();
 }
 
-// ✅ Avoid multiple permission requests
+
 bool _permissionsRequested = false;
 
 Future<void> _requestPermissionsOnce() async {
@@ -60,7 +60,7 @@ Future<void> _requestPermissionsOnce() async {
   }
 }
 
-// ✅ Updated permission request function
+
 Future<void> _checkAndRequestPermissions() async {
   PermissionStatus status = await Permission.sms.status;
 
@@ -76,7 +76,6 @@ Future<void> _checkAndRequestPermissions() async {
   }
 }
 
-// ✅ Extracted animation initialization into a function
 void _initializeAnimations() {
   _controller1 = AnimationController(
     duration: const Duration(milliseconds: 200),
@@ -402,42 +401,49 @@ Future<bool> _checkInternetConnection() async {
   @override
   Widget build(BuildContext context) {
   return Scaffold(
-    appBar: AppBar(
-    //  title: Text("Your Title"),
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blue[100]!, Colors.white],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-      ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.all(8.0), // Padding to fit the button properly
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SelectionScreen()),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              primary: Colors.blue, // Button color
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8), // Rounded corners
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 10), // Adjust padding
-            ),
-            child: Text(
-              "Select Airport",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ),
-      ],
-    ),
+    // appBar: AppBar(
+    // //  title: Text("Your Title"),
+    //   flexibleSpace: Container(
+    //     decoration: BoxDecoration(
+    //       gradient: LinearGradient(
+    //         colors: [Colors.blue[100]!, Colors.white],
+    //         begin: Alignment.topCenter,
+    //         end: Alignment.bottomCenter,
+    //       ),
+    //     ),
+    //   ),
+    //   actions: [
+    //     Padding(
+    //       padding: const EdgeInsets.all(8.0), // Padding to fit the button properly
+    //       child: ElevatedButton(
+    //          style: ElevatedButton.styleFrom(
+    //                 primary: const Color.fromARGB(
+    //                     255, 245, 189, 6), // Background color
+    //                 onPrimary: Colors.white, // Text color
+    //                 padding: const EdgeInsets.symmetric(
+    //                     horizontal: 30, vertical: 15),
+    //                 shape: RoundedRectangleBorder(
+    //                   borderRadius:
+    //                       BorderRadius.circular(30), // Rounded corners
+    //                 ),
+    //                 elevation: 5,
+    //                 minimumSize: const Size(150, 100), // Shadow effect
+    //               ),
+    //         onPressed: () {
+    //           Navigator.push(
+    //             context,
+    //             MaterialPageRoute(builder: (context) => SelectionScreen()),
+    //           );
+    //         },
+    //         child: Text(
+    //           "Select Airport",
+    //           style: TextStyle(color: Colors.white,fontSize: 12),
+
+    //         ),
+    //       ),
+    //     ),
+    //   ],
+    // ),
     body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -465,7 +471,7 @@ Future<bool> _checkInternetConnection() async {
                 ),
               ),
               const SizedBox(
-                height: 200,
+                height:100,
               ),
               SlideAnimation(
                 animationController: _animationController,
