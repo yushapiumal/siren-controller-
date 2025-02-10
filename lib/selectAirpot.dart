@@ -14,7 +14,7 @@ class _SelectionScreenState extends State<SelectionScreen>
     with TickerProviderStateMixin {
   String? _selectedAirport;
   AnimationController? _animationController;
-  final List<String> _airports = ['NUF', 'CMB', 'RTF', 'DPC'];
+  final List<String> _airports = ['NUF'];
   late Animation<double> _scaleAnimation2;
   late AnimationController _controller2;
 
@@ -238,5 +238,6 @@ class _SelectionScreenState extends State<SelectionScreen>
       ),
     );
   }
+  
 }
 }
