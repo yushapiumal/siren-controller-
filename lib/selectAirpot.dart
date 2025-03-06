@@ -229,6 +229,7 @@ class _SelectionScreenState extends State<SelectionScreen>
     await prefs.setBool('first_time', false);
    await prefs.setString('selected_airport', _selectedAirport!);
 
+    // ignore: use_build_context_synchronously
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(

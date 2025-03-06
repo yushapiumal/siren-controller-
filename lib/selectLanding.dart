@@ -1,10 +1,10 @@
 import 'dart:io';
-
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:siren/slideAnimation.dart';
+import 'ApiServices.dart';
 import 'flightJson.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -31,11 +31,12 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
   late AnimationController _controller1;
   late Animation<double> _scaleAnimation1;
   DateTime today = DateTime.now();
+  late Future<List<Flight>> _futureFlights;
 
   @override
   void initState() {
     super.initState();
-    futureFlights = fetchFlightData(widget.selectedAirport);
+    futureFlights = ApiService().fetchFlightData(widget.selectedAirport);
     _animationController = AnimationController(
         vsync: this, duration: Duration(milliseconds: 2000));
 
@@ -46,52 +47,11 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
     _scaleAnimation1 = Tween<double>(begin: 1.0, end: 1.2).animate(
       CurvedAnimation(parent: _controller1, curve: Curves.easeInOut),
     );
+
+    _futureFlights = ApiService().fetchFlight(widget.selectedAirport);
   }
 
-  Future<List<Flight>> fetchFlightData(String selectedAirport) async {
-    DateTime today = DateTime.now();
-    String formattedDate = DateFormat('dd/MM/yyyy').format(today);
-    final response = await http.get(
-      Uri.parse(
-          'https://cinnamon.go.digitable.io/api/avidi/v1/radar?type=today&port=$selectedAirport'),
-    );
-
-    try {
-      if (response.statusCode == 200) {
-        Map<String, dynamic> responseData = jsonDecode(response.body);
-        List<dynamic> flightsData = responseData['data'];
-        if (flightsData.isEmpty) {
-          print("No flight data available.");
-          return [];
-        }
-        List<Flight> flights = flightsData.map((flight) {
-          var portData = flight['port_data'];
-
-          String pd_flightNo = portData['flightNo'] != null
-              ? portData['flightNo'].toString()
-              : 'N/A';
-
-          String flightNo = flight['flightNo'] != null
-              ? flight['flightNo'].toString()
-              : 'N/A';
-
-          String des =
-              portData['des'] != null ? portData['des'].toString() : 'N/A';
-          print("FlightNo: $flightNo, PortData FlightNo: $pd_flightNo");
-
-          return Flight(pd_flightNo: pd_flightNo, des: des, flightNo: flightNo);
-        }).toList();
-
-        return flights;
-      } else {
-        print('Failed to load data');
-        return [];
-      }
-    } catch (e) {
-      print('Error: $e');
-      return [];
-    }
-  }
+  
 
   void submitSelection() {
     if (_selectedFlight != null) {
@@ -171,7 +131,7 @@ class _TogglePageState extends State<TogglePage> with TickerProviderStateMixin {
                     } else if (snapshot.hasError) {
                       return Center(child: Text('Error: ${snapshot.error}'));
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(child: Text('No flights found.'));
+                      return Center(child: Text('No flights available today',style: TextStyle(fontSize:20, color: Colors.orange, fontWeight:FontWeight.bold ),));
                     } else {
                       List<Flight> flights = snapshot.data!;
                       return DropdownButton<Flight>(

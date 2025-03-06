@@ -1,10 +1,16 @@
+import 'dart:convert';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 import 'package:siren/selectAirpot.dart';
 import 'package:siren/tabpage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
- // Replace with your actual home page
+import 'package:http/http.dart' as http;
+import 'ApiServices.dart'; // Ensure this matches your file name
+import 'flightJson.dart';
+import 'dart:async'; // Added for Timer
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +22,6 @@ void main() async {
     print("Failed to initialize Firebase: $e");
   }
 
-  await Firebase.initializeApp();
   try {
     await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: "avidi@go.digitable.io",
@@ -37,9 +42,17 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   bool isFirstTime = prefs.getBool('first_time') ?? true;
-  String? selectedAirport = prefs.getString('selected_airport');
+  String? selectedAirport = prefs.getString('selected_airport') ?? 'NUF';
 
-  runApp(MyApp(isFirstTime: isFirstTime, selectedAirport: selectedAirport));
+  // Silently call API and update Firebase when app opens
+  ApiService().fetchFlight(selectedAirport).catchError((e) {
+    print("Error during initial API call: $e");
+  });
+
+  runApp(MyApp(
+    isFirstTime: isFirstTime,
+    selectedAirport: selectedAirport,
+  ));
 }
 
 class MyApp extends StatelessWidget {

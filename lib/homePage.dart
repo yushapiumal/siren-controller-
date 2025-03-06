@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_sms/flutter_sms.dart';
-// import 'package:sms/sms.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -9,9 +8,12 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:siren/selectAirpot.dart';
 import 'package:siren/slideAnimation.dart';
+import 'ApiServices.dart';
+import 'flightJson.dart';
 
 class SmsHomePage extends StatefulWidget {
-  const SmsHomePage({super.key});
+  final String selectedAirport;
+   SmsHomePage({Key? key, required this.selectedAirport}) : super(key: key);
 
   @override
   _SmsHomePageState createState() => _SmsHomePageState();
@@ -35,6 +37,8 @@ class _SmsHomePageState extends State<SmsHomePage>
   late TabController _tabController;
   late Stream<ConnectivityResult> _connectivityStream;
   AnimationController? _animationController;
+  late Future<List<Flight>> _futureFlights;
+ 
 
 
   @override
@@ -48,6 +52,8 @@ void initState() {
   _connectivityStream = Connectivity().onConnectivityChanged;
 
  _initializeAnimations();
+   _futureFlights = ApiService().fetchFlight(widget.selectedAirport);
+
 }
 
 
@@ -105,6 +111,7 @@ void _initializeAnimations() {
     vsync: this, 
     duration: Duration(milliseconds: 2000),
   );
+ 
 }
 
 // ✅ Improved internet check function
